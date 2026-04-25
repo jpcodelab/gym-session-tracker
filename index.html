@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gym Session Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #1a1a2e;
+    --bg2: #16213e;
+    --bg3: #0f3460;
+    --card: #1e2a45;
+    --border: #2a3a5c;
+    --accent: #4361ee;
+    --accent-hover: #3451de;
+    --success: #06d6a0;
+    --warning: #ffd166;
+    --danger: #ef476f;
+    --text: #e8eaf6;
+    --text-muted: #8892b0;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    animation: fadeIn 0.3s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── SCREEN 1: LOAD ── */
+  #screen-load {
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .load-card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    border: 1px solid var(--border);
+  }
+
+  .logo {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .logo-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .logo h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  .logo p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: monospace;
+    font-size: 13px;
+    padding: 12px;
+    resize: vertical;
+    min-height: 180px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea.readonly {
+    min-height: 320px;
+    background: var(--bg2);
+    cursor: default;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .file-btn {
+    width: 100%;
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    padding: 14px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: border-color 0.2s, color 0.2s;
+    min-height: 44px;
+  }
+  .file-btn:hover, .file-btn:active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  #file-input { display: none; }
+
+  .error-box {
+    background: rgba(239,71,111,0.12);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
+    color: var(--danger);
+    padding: 12px 14px;
+    font-size: 14px;
+    margin-top: 12px;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.1s, background 0.2s;
+    text-align: center;
+    width: 100%;
+    -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(0.97); opacity: 0.9; }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--bg3); color: var(--text); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-success { background: var(--success); color: #000; }
+  .btn-danger { background: var(--danger); color: #fff; }
+
+  .btn-sm {
+    min-height: 44px;
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-20 { margin-top: 20px; }
+
+  /* ── SCREEN 2: SESSION ── */
+  #screen-session {
+    flex-direction: column;
+  }
+
+  .session-header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .session-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .session-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .session-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .session-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .timer {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .exercise-counter {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .progress-bar-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* ── EXERCISE CARD ── */
+  .session-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 100px;
+  }
+
+  .exercise-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px 16px;
+    margin-bottom: 16px;
+  }
+
+  .exercise-name {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .exercise-target {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .badge {
+    background: var(--bg3);
+    color: var(--accent);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .coach-notes {
+    background: rgba(67,97,238,0.1);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .criteria-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .criterion-tag {
+    background: rgba(6,214,160,0.1);
+    border: 1px solid rgba(6,214,160,0.3);
+    color: var(--success);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ── SERIES ── */
+  .series-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 20px 0 10px;
+  }
+
+  .series-header h3 {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+  }
+
+  .series-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .series-row {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    transition: border-color 0.2s;
+  }
+  .series-row.active { border-color: var(--accent); }
+  .series-row.done { border-color: rgba(6,214,160,0.4); background: rgba(6,214,160,0.04); }
+
+  .series-row-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .series-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg3);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .series-row.done .series-num {
+    background: rgba(6,214,160,0.2);
+    color: var(--success);
+  }
+
+  .series-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .input-group label {
+    font-size: 11px;
+    margin-bottom: 0;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 10px;
+    text-align: center;
+    outline: none;
+    min-height: 44px;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    transition: border-color 0.2s;
+  }
+  input[type="number"]:focus { border-color: var(--accent); }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  /* Rating buttons */
+  .rating-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .rating-btn {
+    min-height: 48px;
+    border-radius: var(--radius-sm);
+    border: 2px solid transparent;
+    background: var(--bg2);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 4px;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    -webkit-appearance: none;
+    line-height: 1.2;
+  }
+  .rating-btn:active { transform: scale(0.95); }
+  .rating-btn .rating-icon { font-size: 20px; }
+  .rating-btn .rating-label { font-size: 11px; }
+
+  .rating-btn[data-rating="ok"].selected {
+    background: rgba(6,214,160,0.15);
+    border-color: var(--success);
+    color: var(--success);
+  }
+  .rating-btn[data-rating="adjust"].selected {
+    background: rgba(255,209,102,0.15);
+    border-color: var(--warning);
+    color: var(--warning);
+  }
+  .rating-btn[data-rating="fail"].selected {
+    background: rgba(239,71,111,0.15);
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  /* Series note */
+  .series-note-toggle {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    -webkit-appearance: none;
+  }
+  .series-note-toggle:hover { color: var(--accent); }
+
+  .series-note-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    margin-top: 8px;
+    min-height: 44px;
+    font-family: system-ui, sans-serif;
+    transition: border-color 0.2s;
+    resize: none;
+    display: none;
+  }
+  .series-note-input.open { display: block; }
+  .series-note-input:focus { border-color: var(--accent); }
+
+  /* ── SESSION NAV ── */
+  .session-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    z-index: 20;
+  }
+
+  .session-nav .btn {
+    flex: 1;
+  }
+
+  .btn-add-exercise {
+    flex: 0 0 auto !important;
+    width: 48px !important;
+    padding: 0 !important;
+    font-size: 22px !important;
+    background: var(--bg3) !important;
+    color: var(--accent) !important;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: flex-end;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .modal h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 16px;
+    padding: 12px 14px;
+    outline: none;
+    min-height: 48px;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+
+  .modal-btns { display: flex; gap: 10px; margin-top: 8px; }
+
+  /* ── SCREEN 3: SUMMARY ── */
+  #screen-summary {
+    flex-direction: column;
+  }
+
+  .summary-header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .summary-header h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .summary-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 32px;
+  }
+
+  .copy-btn-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  .copy-confirm {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--success);
+    color: #000;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .copy-confirm.show { opacity: 1; }
+
+  /* ── UTILITIES ── */
+  .row { display: flex; gap: 10px; }
+  .row .btn { flex: 1; }
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* finish button highlight */
+  .finish-banner {
+    background: rgba(6,214,160,0.1);
+    border: 1px solid rgba(6,214,160,0.3);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: var(--success);
+    text-align: center;
+  }
+
+  .done-check {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background: var(--success);
+    border-radius: 50%;
+    color: #000;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 20px;
+    margin-left: 6px;
+    flex-shrink: 0;
+  }
+
+  .series-row-header-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex: 1;
+  }
+  .series-row.done .series-row-header-text { color: var(--success); }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════ SCREEN 1 ════════════════════════════════ -->
+<div id="screen-load" class="screen active">
+  <div class="load-card">
+    <div class="logo">
+      <span class="logo-icon">🏋️</span>
+      <h1>Gym Session Tracker</h1>
+      <p>Carga tu plan de entrenamiento</p>
+    </div>
+
+    <label for="json-input">Pega el JSON del plan</label>
+    <textarea id="json-input" placeholder='{"sesion": "...", "fecha": "...", "ejercicios": [...]}'></textarea>
+
+    <div class="divider">o</div>
+
+    <button class="file-btn" onclick="document.getElementById('file-input').click()">
+      <span>📂</span> Cargar archivo JSON
+    </button>
+    <input type="file" id="file-input" accept=".json,application/json">
+
+    <div id="load-error" class="error-box"></div>
+
+    <button class="btn btn-primary mt-20" onclick="loadSession()">
+      Cargar sesión →
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SCREEN 2 ════════════════════════════════ -->
+<div id="screen-session" class="screen">
+  <div class="session-header">
+    <div class="session-header-top">
+      <div>
+        <div class="session-title" id="hdr-name"></div>
+        <div class="session-date" id="hdr-date"></div>
+      </div>
+      <div class="session-meta">
+        <span class="timer" id="timer-display">00:00</span>
+        <span class="exercise-counter" id="exercise-counter"></span>
+      </div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="session-body" id="session-body"></div>
+
+  <div class="session-nav">
+    <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="navigate(-1)">← Anterior</button>
+    <button class="btn btn-primary btn-sm" id="btn-next" onclick="navigate(1)">Siguiente →</button>
+    <button class="btn btn-add-exercise btn-sm" title="Añadir ejercicio" onclick="openAddModal()">＋</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ SCREEN 3 ════════════════════════════════ -->
+<div id="screen-summary" class="screen">
+  <div class="summary-header">
+    <h2>✅ Sesión completada</h2>
+  </div>
+  <div class="summary-body">
+    <div class="finish-banner" id="finish-banner"></div>
+    <div class="copy-btn-wrap">
+      <button class="btn btn-success" onclick="copyMarkdown()">📋 Copiar al portapapeles</button>
+      <div class="copy-confirm" id="copy-confirm">¡Copiado! ✓</div>
+    </div>
+    <div class="section-label">Resumen de la sesión</div>
+    <textarea class="readonly" id="summary-output" readonly></textarea>
+    <button class="btn btn-ghost mt-12" onclick="backToSession()">← Volver a editar</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ MODAL ════════════════════════════════ -->
+<div id="modal-add" class="modal-overlay" onclick="handleModalOverlay(event)">
+  <div class="modal">
+    <h2>➕ Añadir ejercicio</h2>
+    <div class="field">
+      <label for="modal-name">Nombre del ejercicio</label>
+      <input type="text" id="modal-name" placeholder="Ej: Curl de bíceps">
+    </div>
+    <div class="field">
+      <label for="modal-series">Número de series</label>
+      <input type="number" id="modal-series" value="3" min="1" max="20">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmAddExercise()">Añadir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+const state = {
+  session: null,       // parsed JSON
+  exercises: [],       // array of exercise objects with per-series log
+  currentIndex: 0,
+  timerStart: null,
+  timerInterval: null,
+  completedAt: null,
+};
+
+/* ═══════════════════════════════════════════════════
+   SCREEN 1 — LOAD
+═══════════════════════════════════════════════════ */
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('json-input').value = ev.target.result;
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+function loadSession() {
+  const raw = document.getElementById('json-input').value.trim();
+  const errEl = document.getElementById('load-error');
+
+  if (!raw) {
+    showError(errEl, 'Por favor pega un JSON o carga un archivo.');
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch(e) {
+    showError(errEl, `JSON inválido: ${e.message}`);
+    return;
+  }
+
+  if (!parsed.ejercicios || !Array.isArray(parsed.ejercicios) || parsed.ejercicios.length === 0) {
+    showError(errEl, 'El JSON debe tener un array "ejercicios" con al menos un ejercicio.');
+    return;
+  }
+
+  for (let i = 0; i < parsed.ejercicios.length; i++) {
+    const ej = parsed.ejercicios[i];
+    if (!ej.nombre || typeof ej.nombre !== 'string') {
+      showError(errEl, `Ejercicio ${i+1}: el campo "nombre" es obligatorio.`);
+      return;
+    }
+    if (!ej.series || typeof ej.series !== 'number' || ej.series < 1) {
+      showError(errEl, `Ejercicio "${ej.nombre}": el campo "series" debe ser un número mayor que 0.`);
+      return;
+    }
+  }
+
+  errEl.classList.remove('visible');
+  state.session = parsed;
+  state.exercises = parsed.ejercicios.map(buildExercise);
+  state.currentIndex = 0;
+
+  initSessionScreen();
+  showScreen('screen-session');
+
+  // start timer
+  state.timerStart = Date.now();
+  state.timerInterval = setInterval(updateTimer, 1000);
+}
+
+function showError(el, msg) {
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+/* ═══════════════════════════════════════════════════
+   EXERCISE MODEL
+═══════════════════════════════════════════════════ */
+function buildExercise(raw) {
+  const seriesCount = raw.series;
+  const series = [];
+  for (let i = 0; i < seriesCount; i++) {
+    series.push({
+      reps: raw.repeticiones != null ? raw.repeticiones : null,
+      weight: raw.peso_orientativo_kg != null ? raw.peso_orientativo_kg : null,
+      rating: null,   // 'ok' | 'adjust' | 'fail'
+      note: '',
+    });
+  }
+  return {
+    nombre: raw.nombre,
+    series: seriesCount,
+    repeticiones: raw.repeticiones ?? null,
+    peso: raw.peso_orientativo_kg ?? null,
+    notas: raw.notas ?? null,
+    criterios: raw.criterios_valoracion ?? [],
+    log: series,
+    isAdded: false,
+  };
+}
+
+/* ═══════════════════════════════════════════════════
+   SCREEN 2 — SESSION
+═══════════════════════════════════════════════════ */
+function initSessionScreen() {
+  const s = state.session;
+  document.getElementById('hdr-name').textContent = s.sesion || 'Sesión';
+  document.getElementById('hdr-date').textContent = s.fecha
+    ? formatDate(s.fecha)
+    : new Date().toLocaleDateString('es-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  renderExercise();
+}
+
+function renderExercise() {
+  const idx = state.currentIndex;
+  const exs = state.exercises;
+  const ex = exs[idx];
+
+  // header meta
+  document.getElementById('exercise-counter').textContent = `${idx + 1} / ${exs.length}`;
+
+  // progress = exercises where all series are rated
+  const completed = exs.filter(e => isExerciseDone(e)).length;
+  const pct = Math.round((completed / exs.length) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+
+  // nav buttons
+  document.getElementById('btn-prev').disabled = idx === 0;
+  document.getElementById('btn-next').textContent =
+    idx === exs.length - 1 ? 'Finalizar ✓' : 'Siguiente →';
+  document.getElementById('btn-next').className =
+    idx === exs.length - 1 ? 'btn btn-success btn-sm' : 'btn btn-primary btn-sm';
+
+  // build card HTML
+  let html = '';
+
+  // exercise card
+  html += `<div class="exercise-card">`;
+  html += `<div class="exercise-name">${escHtml(ex.nombre)}</div>`;
+
+  // badges
+  html += `<div class="exercise-target">`;
+  if (ex.repeticiones != null || ex.peso != null) {
+    let target = `${ex.series} series`;
+    if (ex.repeticiones != null) target += ` × ${ex.repeticiones} reps`;
+    if (ex.peso != null) target += ` @ ${ex.peso} kg`;
+    html += `<span class="badge">🎯 ${escHtml(target)}</span>`;
+  } else {
+    html += `<span class="badge">🎯 ${ex.series} series</span>`;
+  }
+  if (ex.isAdded) html += `<span class="badge" style="color:var(--warning)">➕ Añadido</span>`;
+  html += `</div>`;
+
+  // coach notes
+  if (ex.notas) {
+    html += `<div class="coach-notes">💬 ${escHtml(ex.notas)}</div>`;
+  }
+
+  // criteria
+  if (ex.criterios && ex.criterios.length > 0) {
+    html += `<div class="section-label" style="margin-top:4px">Criterios de valoración</div>`;
+    html += `<div class="criteria-list">`;
+    ex.criterios.forEach(c => {
+      html += `<span class="criterion-tag">${escHtml(c)}</span>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `</div>`; // end exercise-card
+
+  // series section
+  html += `<div class="series-header"><h3>Series</h3></div>`;
+  html += `<div class="series-list">`;
+
+  ex.log.forEach((s, si) => {
+    const isDone = s.rating !== null;
+    const isActive = !isDone && ex.log.slice(0, si).every(prev => prev.rating !== null);
+    const rowClass = isDone ? 'series-row done' : isActive ? 'series-row active' : 'series-row';
+
+    html += `<div class="${rowClass}" id="series-row-${idx}-${si}">`;
+    html += `<div class="series-row-header">
+      <div class="series-num">${si + 1}</div>
+      <div class="series-row-header-text">Serie ${si + 1}${isDone ? '' : ''}</div>
+      ${isDone ? '<span class="done-check">✓</span>' : ''}
+    </div>`;
+
+    html += `<div class="series-inputs">`;
+    html += `<div class="input-group">
+      <label>Repeticiones</label>
+      <input type="number" min="0" max="999"
+        value="${s.reps != null ? s.reps : ''}"
+        placeholder="${ex.repeticiones != null ? ex.repeticiones : '—'}"
+        oninput="updateSeriesField(${idx},${si},'reps',this.value)"
+        inputmode="numeric">
+    </div>`;
+    html += `<div class="input-group">
+      <label>Peso (kg)</label>
+      <input type="number" min="0" max="9999" step="0.5"
+        value="${s.weight != null ? s.weight : ''}"
+        placeholder="${ex.peso != null ? ex.peso : '—'}"
+        oninput="updateSeriesField(${idx},${si},'weight',this.value)"
+        inputmode="decimal">
+    </div>`;
+    html += `</div>`; // end series-inputs
+
+    // rating buttons
+    html += `<div class="rating-btns">`;
+    ['ok','adjust','fail'].forEach(r => {
+      const icons = { ok:'✅', adjust:'⚠️', fail:'❌' };
+      const labels = { ok:'Bien', adjust:'Ajustar', fail:'No completada' };
+      const sel = s.rating === r ? ' selected' : '';
+      html += `<button class="rating-btn${sel}" data-rating="${r}"
+        onclick="setRating(${idx},${si},'${r}')">
+        <span class="rating-icon">${icons[r]}</span>
+        <span class="rating-label">${labels[r]}</span>
+      </button>`;
+    });
+    html += `</div>`;
+
+    // note toggle
+    const noteOpen = s.note ? ' open' : '';
+    html += `<button class="series-note-toggle" onclick="toggleNote(${idx},${si})">
+      ${s.note ? '📝' : '+'} ${s.note ? 'Nota: ' + escHtml(s.note.substring(0,30)) + (s.note.length > 30 ? '…' : '') : 'Añadir nota'}
+    </button>`;
+    html += `<textarea class="series-note-input${noteOpen}" id="note-${idx}-${si}"
+      placeholder="Nota opcional..."
+      oninput="updateSeriesField(${idx},${si},'note',this.value)"
+      rows="2">${escHtml(s.note)}</textarea>`;
+
+    html += `</div>`; // end series-row
+  });
+
+  html += `</div>`; // end series-list
+
+  document.getElementById('session-body').innerHTML = html;
+  document.getElementById('session-body').scrollTo(0, 0);
+}
+
+function updateSeriesField(exIdx, sIdx, field, value) {
+  const s = state.exercises[exIdx].log[sIdx];
+  if (field === 'reps' || field === 'weight') {
+    s[field] = value === '' ? null : parseFloat(value);
+  } else {
+    s[field] = value;
+  }
+}
+
+function setRating(exIdx, sIdx, rating) {
+  const s = state.exercises[exIdx].log[sIdx];
+  s.rating = rating;
+
+  // update DOM without full re-render for snappiness
+  const row = document.getElementById(`series-row-${exIdx}-${sIdx}`);
+  if (row) {
+    row.className = 'series-row done';
+    row.querySelector('.series-row-header-text').className = 'series-row-header-text';
+    if (!row.querySelector('.done-check')) {
+      const check = document.createElement('span');
+      check.className = 'done-check';
+      check.textContent = '✓';
+      row.querySelector('.series-row-header').appendChild(check);
+    }
+    row.querySelectorAll('.rating-btn').forEach(btn => {
+      btn.className = 'rating-btn' + (btn.dataset.rating === rating ? ' selected' : '');
+    });
+    // highlight next series
+    const nextRow = document.getElementById(`series-row-${exIdx}-${sIdx + 1}`);
+    if (nextRow && !nextRow.classList.contains('done')) {
+      nextRow.className = 'series-row active';
+    }
+  }
+
+  // update progress
+  const ex = state.exercises[exIdx];
+  const completed = state.exercises.filter(e => isExerciseDone(e)).length;
+  const pct = Math.round((completed / state.exercises.length) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+
+  // update next button if last exercise
+  if (state.currentIndex === state.exercises.length - 1) {
+    const allDone = state.exercises.every(isExerciseDone);
+    if (allDone) {
+      document.getElementById('btn-next').textContent = 'Finalizar ✓';
+      document.getElementById('btn-next').className = 'btn btn-success btn-sm';
+    }
+  }
+}
+
+function toggleNote(exIdx, sIdx) {
+  const el = document.getElementById(`note-${exIdx}-${sIdx}`);
+  if (el) {
+    el.classList.toggle('open');
+    if (el.classList.contains('open')) el.focus();
+  }
+}
+
+function isExerciseDone(ex) {
+  return ex.log.every(s => s.rating !== null);
+}
+
+function navigate(dir) {
+  const newIdx = state.currentIndex + dir;
+
+  if (dir === 1 && newIdx >= state.exercises.length) {
+    // try to finish
+    const allDone = state.exercises.every(isExerciseDone);
+    if (!allDone) {
+      // find first incomplete exercise
+      const firstIncomplete = state.exercises.findIndex(e => !isExerciseDone(e));
+      if (firstIncomplete !== -1) {
+        state.currentIndex = firstIncomplete;
+        renderExercise();
+      }
+      return;
+    }
+    finishSession();
+    return;
+  }
+
+  if (newIdx < 0 || newIdx >= state.exercises.length) return;
+  state.currentIndex = newIdx;
+  renderExercise();
+}
+
+/* ═══════════════════════════════════════════════════
+   ADD EXERCISE MODAL
+═══════════════════════════════════════════════════ */
+function openAddModal() {
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-series').value = '3';
+  document.getElementById('modal-add').classList.add('open');
+  setTimeout(() => document.getElementById('modal-name').focus(), 100);
+}
+
+function closeAddModal() {
+  document.getElementById('modal-add').classList.remove('open');
+}
+
+function handleModalOverlay(e) {
+  if (e.target === document.getElementById('modal-add')) closeAddModal();
+}
+
+function confirmAddExercise() {
+  const name = document.getElementById('modal-name').value.trim();
+  const seriesCount = parseInt(document.getElementById('modal-series').value, 10);
+
+  if (!name) {
+    document.getElementById('modal-name').focus();
+    return;
+  }
+  if (!seriesCount || seriesCount < 1) {
+    document.getElementById('modal-series').focus();
+    return;
+  }
+
+  const ex = buildExercise({ nombre: name, series: seriesCount });
+  ex.isAdded = true;
+  state.exercises.push(ex);
+  state.currentIndex = state.exercises.length - 1;
+  closeAddModal();
+  renderExercise();
+}
+
+/* ═══════════════════════════════════════════════════
+   TIMER
+═══════════════════════════════════════════════════ */
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - state.timerStart) / 1000);
+  const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+  const s = (elapsed % 60).toString().padStart(2, '0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+}
+
+function getElapsedMinutes() {
+  return Math.round((Date.now() - state.timerStart) / 60000);
+}
+
+function getCompletionTime() {
+  const d = state.completedAt || new Date();
+  return d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+}
+
+/* ═══════════════════════════════════════════════════
+   SCREEN 3 — SUMMARY
+═══════════════════════════════════════════════════ */
+function finishSession() {
+  state.completedAt = new Date();
+  clearInterval(state.timerInterval);
+
+  const md = generateMarkdown();
+  document.getElementById('summary-output').value = md;
+
+  const mins = getElapsedMinutes();
+  document.getElementById('finish-banner').textContent =
+    `Sesión completada a las ${getCompletionTime()} — Duración: ${mins} min`;
+
+  showScreen('screen-summary');
+}
+
+function backToSession() {
+  showScreen('screen-session');
+  state.timerInterval = setInterval(updateTimer, 1000);
+  renderExercise();
+}
+
+function copyMarkdown() {
+  const text = document.getElementById('summary-output').value;
+  const confirm = document.getElementById('copy-confirm');
+
+  const show = () => {
+    confirm.classList.add('show');
+    setTimeout(() => confirm.classList.remove('show'), 2000);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(show).catch(() => fallbackCopy(text, show));
+  } else {
+    fallbackCopy(text, show);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); cb(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+/* ═══════════════════════════════════════════════════
+   MARKDOWN GENERATION
+═══════════════════════════════════════════════════ */
+function generateMarkdown() {
+  const s = state.session;
+  const sessionName = s.sesion || 'Sesión';
+  const fecha = s.fecha || new Date().toISOString().slice(0,10);
+  const time = getCompletionTime();
+  const mins = getElapsedMinutes();
+
+  let md = `---\n## Sesión: ${sessionName} — ${fecha}\n\n`;
+
+  state.exercises.forEach(ex => {
+    md += `### ${ex.nombre}\n`;
+
+    const parts = [];
+    if (ex.repeticiones != null && ex.peso != null) {
+      parts.push(`**Objetivo:** ${ex.series}×${ex.repeticiones} @ ${ex.peso}kg`);
+    } else if (ex.repeticiones != null) {
+      parts.push(`**Objetivo:** ${ex.series}×${ex.repeticiones}`);
+    } else {
+      parts.push(`**Objetivo:** ${ex.series} series`);
+    }
+    md += `- ${parts[0]}\n`;
+
+    if (ex.notas) {
+      md += `- **Notas del plan:** ${ex.notas}\n`;
+    }
+    md += '\n';
+
+    // table
+    md += `| Serie | Reps | Peso (kg) | Valoración | Nota |\n`;
+    md += `|-------|------|-----------|------------|------|\n`;
+
+    ex.log.forEach((s, i) => {
+      const ratingMap = { ok: '✅ Bien', adjust: '⚠️ Ajustar', fail: '❌ No completada' };
+      const rating = s.rating ? ratingMap[s.rating] : '—';
+      const reps = s.reps != null ? s.reps : (ex.repeticiones != null ? ex.repeticiones : '—');
+      const weight = s.weight != null ? s.weight : (ex.peso != null ? ex.peso : '—');
+      const note = s.note || '';
+      md += `| ${i+1} | ${reps} | ${weight} | ${rating} | ${note} |\n`;
+    });
+    md += '\n';
+
+    // criteria evaluation
+    if (ex.criterios && ex.criterios.length > 0) {
+      const okCount = ex.log.filter(s => s.rating === 'ok').length;
+      const failCount = ex.log.filter(s => s.rating === 'fail').length;
+      const total = ex.log.length;
+
+      let overall;
+      if (failCount / total > 0.5) overall = '❌';
+      else if (okCount / total >= 0.6) overall = '✓';
+      else overall = '⚠️';
+
+      const criteriaStr = ex.criterios.map(c => `${c} ${overall}`).join(', ');
+      md += `**Criterios evaluados:** ${criteriaStr}\n\n`;
+    }
+
+    md += '---\n';
+  });
+
+  md += `\n*Sesión completada a las ${time} — Duración: ${mins} min*\n---\n`;
+  return md;
+}
+
+/* ═══════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function formatDate(dateStr) {
+  try {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('es-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  } catch(e) {
+    return dateStr;
+  }
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
