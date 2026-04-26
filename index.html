@@ -369,13 +369,6 @@
   .series-row.active { border-color: var(--accent); }
   .series-row.done { border-color: rgba(6,214,160,0.4); background: rgba(6,214,160,0.04); }
 
-  .series-row-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
   .series-num {
     width: 28px;
     height: 28px;
@@ -432,68 +425,116 @@
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
-  /* Rating buttons */
-  .rating-btns {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 6px;
-    margin-bottom: 8px;
-  }
+  /* ── NEW SERIES INTERACTION MODEL ── */
 
-  .rating-btn {
-    min-height: 48px;
+  /* State A: CTA button */
+  .btn-complete {
+    width: 100%;
+    min-height: 52px;
+    font-size: 16px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #fff;
+    border: none;
     border-radius: var(--radius-sm);
+    cursor: pointer;
+    margin-top: 12px;
+    transition: opacity 0.15s, transform 0.1s, background 0.2s;
+    -webkit-appearance: none;
+  }
+  .btn-complete:hover { background: var(--accent-hover); }
+  .btn-complete:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* State B: review panel */
+  .series-row.review { border-color: var(--accent); }
+  .review-panel { margin-top: 12px; animation: fadeIn 0.2s ease; }
+
+  /* Adjustment grid */
+  .adj-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .adj-pill {
+    min-height: 48px;
+    border-radius: 10px;
     border: 2px solid transparent;
     background: var(--bg2);
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    padding: 6px 4px;
-    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    padding: 8px 10px;
+    text-align: center;
+    line-height: 1.3;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
     -webkit-appearance: none;
-    line-height: 1.2;
   }
-  .rating-btn:active { transform: scale(0.95); }
-  .rating-btn .rating-icon { font-size: 20px; }
-  .rating-btn .rating-label { font-size: 11px; }
+  .adj-pill:active { transform: scale(0.97); }
+  .adj-pill.selected.correct { background: rgba(6,214,160,0.15); border-color: var(--success); color: var(--success); }
+  .adj-pill.selected.up      { background: rgba(67,97,238,0.15); border-color: var(--accent); color: var(--accent); }
+  .adj-pill.selected.down    { background: rgba(255,209,102,0.15); border-color: var(--warning); color: var(--warning); }
+  .adj-pill.selected.incomplete { background: rgba(239,71,111,0.15); border-color: var(--danger); color: var(--danger); }
 
-  .rating-btn[data-rating="ok"].selected {
-    background: rgba(6,214,160,0.15);
-    border-color: var(--success);
-    color: var(--success);
-  }
-  .rating-btn[data-rating="adjust"].selected {
-    background: rgba(255,209,102,0.15);
-    border-color: var(--warning);
-    color: var(--warning);
-  }
-  .rating-btn[data-rating="fail"].selected {
-    background: rgba(239,71,111,0.15);
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-
-  /* Series note */
-  .series-note-toggle {
-    background: none;
-    border: none;
+  /* Criteria chips */
+  .criteria-chips { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .criteria-chip {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg2);
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
-    padding: 4px 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    padding: 10px 14px;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
     -webkit-appearance: none;
   }
-  .series-note-toggle:hover { color: var(--accent); }
+  .criteria-chip.checked { background: rgba(6,214,160,0.12); border-color: var(--success); color: var(--text); }
+  .criteria-chip:active { transform: scale(0.98); }
 
+  /* Confirm button */
+  .btn-confirm-series:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Readonly inputs in review state */
+  input[type="number"][readonly] {
+    background: var(--bg3);
+    color: var(--text-muted);
+    border-color: transparent;
+    cursor: default;
+  }
+
+  /* State C: done compact row */
+  .series-done-row { display: flex; align-items: center; gap: 10px; }
+  .series-done-info { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .series-done-values { font-size: 14px; font-weight: 600; color: var(--text); }
+  .series-done-adj { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+  .adj-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .adj-dot.correct  { background: var(--success); }
+  .adj-dot.up       { background: var(--accent); }
+  .adj-dot.down     { background: var(--warning); }
+  .adj-dot.incomplete { background: var(--danger); }
+  .series-done-criteria { font-size: 12px; color: var(--success); }
+  .btn-edit-series {
+    background: none; border: none; color: var(--text-muted);
+    font-size: 12px; cursor: pointer; padding: 4px;
+    flex-shrink: 0; -webkit-appearance: none;
+  }
+  .btn-edit-series:hover { color: var(--accent); }
+
+  /* Locked state */
+  .series-row.locked { opacity: 0.45; }
+  .series-locked-text { font-size: 13px; color: var(--text-muted); font-style: italic; }
+
+  /* Shared row top (pending/locked) */
+  .series-row-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .series-row-label { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+
+  /* Series note (still used in review panel) */
   .series-note-input {
     width: 100%;
     background: var(--bg2);
@@ -731,28 +772,6 @@
     text-align: center;
   }
 
-  .done-check {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    background: var(--success);
-    border-radius: 50%;
-    color: #000;
-    font-size: 12px;
-    font-weight: 700;
-    text-align: center;
-    line-height: 20px;
-    margin-left: 6px;
-    flex-shrink: 0;
-  }
-
-  .series-row-header-text {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-muted);
-    flex: 1;
-  }
-  .series-row.done .series-row-header-text { color: var(--success); }
 </style>
 </head>
 <body>
@@ -989,6 +1008,7 @@ function loadSession() {
 
   errEl.classList.remove('visible');
   clearStorage();
+  seriesInReview = null;
   document.getElementById('recovery-banner').style.display = 'none';
   clearInterval(state.timerInterval);
 
@@ -1015,12 +1035,15 @@ function showError(el, msg) {
 ═══════════════════════════════════════════════════ */
 function buildExercise(raw) {
   const seriesCount = raw.series;
+  const criterios = raw.criterios_valoracion ?? [];
   const series = [];
   for (let i = 0; i < seriesCount; i++) {
     series.push({
       reps: raw.repeticiones != null ? raw.repeticiones : null,
       weight: raw.peso_orientativo_kg != null ? raw.peso_orientativo_kg : null,
-      rating: null,   // 'ok' | 'adjust' | 'fail'
+      rating: null,        // 'ok'|'adjust'|'fail' — derived from adjustment for markdown compat
+      adjustment: null,    // 'correct'|'up'|'down'|'incomplete'
+      criteriaChecked: criterios.map(() => false),
       note: '',
     });
   }
@@ -1030,7 +1053,7 @@ function buildExercise(raw) {
     repeticiones: raw.repeticiones ?? null,
     peso: raw.peso_orientativo_kg ?? null,
     notas: raw.notas ?? null,
-    criterios: raw.criterios_valoracion ?? [],
+    criterios: criterios,
     log: series,
     isAdded: false,
   };
@@ -1039,6 +1062,8 @@ function buildExercise(raw) {
 /* ═══════════════════════════════════════════════════
    SCREEN 2 — SESSION
 ═══════════════════════════════════════════════════ */
+let seriesInReview = null; // { exIdx, sIdx } — ephemeral, not persisted
+
 function initSessionScreen() {
   const s = state.session;
   document.getElementById('hdr-name').textContent = s.sesion || 'Sesión';
@@ -1111,67 +1136,207 @@ function renderExercise() {
   html += `<div class="series-list">`;
 
   ex.log.forEach((s, si) => {
-    const isDone = s.rating !== null;
-    const isActive = !isDone && ex.log.slice(0, si).every(prev => prev.rating !== null);
-    const rowClass = isDone ? 'series-row done' : isActive ? 'series-row active' : 'series-row';
+    const isDone = s.adjustment !== null;
+    const isInRev = seriesInReview && seriesInReview.exIdx === idx && seriesInReview.sIdx === si;
+    const prevAllDone = ex.log.slice(0, si).every(prev => prev.adjustment !== null);
 
-    html += `<div class="${rowClass}" id="series-row-${idx}-${si}">`;
-    html += `<div class="series-row-header">
-      <div class="series-num">${si + 1}</div>
-      <div class="series-row-header-text">Serie ${si + 1}${isDone ? '' : ''}</div>
-      ${isDone ? '<span class="done-check">✓</span>' : ''}
-    </div>`;
-
-    html += `<div class="series-inputs">`;
-    html += `<div class="input-group">
-      <label>Repeticiones</label>
-      <input type="number" min="0" max="999"
-        value="${s.reps != null ? s.reps : ''}"
-        placeholder="${ex.repeticiones != null ? ex.repeticiones : '—'}"
-        oninput="updateSeriesField(${idx},${si},'reps',this.value)"
-        inputmode="numeric">
-    </div>`;
-    html += `<div class="input-group">
-      <label>Peso (kg)</label>
-      <input type="number" min="0" max="9999" step="0.5"
-        value="${s.weight != null ? s.weight : ''}"
-        placeholder="${ex.peso != null ? ex.peso : '—'}"
-        oninput="updateSeriesField(${idx},${si},'weight',this.value)"
-        inputmode="decimal">
-    </div>`;
-    html += `</div>`; // end series-inputs
-
-    // rating buttons
-    html += `<div class="rating-btns">`;
-    ['ok','adjust','fail'].forEach(r => {
-      const icons = { ok:'✅', adjust:'⚠️', fail:'❌' };
-      const labels = { ok:'Bien', adjust:'Ajustar', fail:'No completada' };
-      const sel = s.rating === r ? ' selected' : '';
-      html += `<button class="rating-btn${sel}" data-rating="${r}"
-        onclick="setRating(${idx},${si},'${r}')">
-        <span class="rating-icon">${icons[r]}</span>
-        <span class="rating-label">${labels[r]}</span>
-      </button>`;
-    });
-    html += `</div>`;
-
-    // note toggle
-    const noteOpen = s.note ? ' open' : '';
-    html += `<button class="series-note-toggle" onclick="toggleNote(${idx},${si})">
-      ${s.note ? '📝' : '+'} ${s.note ? 'Nota: ' + escHtml(s.note.substring(0,30)) + (s.note.length > 30 ? '…' : '') : 'Añadir nota'}
-    </button>`;
-    html += `<textarea class="series-note-input${noteOpen}" id="note-${idx}-${si}"
-      placeholder="Nota opcional..."
-      oninput="updateSeriesField(${idx},${si},'note',this.value)"
-      rows="2">${escHtml(s.note)}</textarea>`;
-
-    html += `</div>`; // end series-row
+    if (isInRev) {
+      html += buildSeriesReview(idx, si, s, ex);
+    } else if (isDone) {
+      html += buildSeriesDone(idx, si, s, ex);
+    } else if (prevAllDone) {
+      html += buildSeriesPending(idx, si, s, ex);
+    } else {
+      html += buildSeriesLocked(idx, si);
+    }
   });
 
   html += `</div>`; // end series-list
 
   document.getElementById('session-body').innerHTML = html;
   document.getElementById('session-body').scrollTo(0, 0);
+}
+
+/* ── Series row builders ── */
+
+function buildSeriesPending(exIdx, sIdx, s, ex) {
+  const rv = s.reps != null ? s.reps : '';
+  const rp = ex.repeticiones != null ? ex.repeticiones : '—';
+  const wv = s.weight != null ? s.weight : '';
+  const wp = ex.peso != null ? ex.peso : '—';
+  return `<div class="series-row active" id="series-row-${exIdx}-${sIdx}">
+    <div class="series-row-top">
+      <div class="series-num">${sIdx + 1}</div>
+      <span class="series-row-label">Serie ${sIdx + 1}</span>
+    </div>
+    <div class="series-inputs">
+      <div class="input-group">
+        <label>Repeticiones</label>
+        <input type="number" id="reps-${exIdx}-${sIdx}" min="0" max="999"
+          value="${rv}" placeholder="${rp}"
+          oninput="updateSeriesField(${exIdx},${sIdx},'reps',this.value)"
+          inputmode="numeric">
+      </div>
+      <div class="input-group">
+        <label>Peso (kg)</label>
+        <input type="number" id="weight-${exIdx}-${sIdx}" min="0" max="9999" step="0.5"
+          value="${wv}" placeholder="${wp}"
+          oninput="updateSeriesField(${exIdx},${sIdx},'weight',this.value)"
+          inputmode="decimal">
+      </div>
+    </div>
+    <button class="btn-complete" onclick="openReview(${exIdx},${sIdx})">Completar serie →</button>
+  </div>`;
+}
+
+function buildSeriesReview(exIdx, sIdx, s, ex) {
+  const rv = s.reps != null ? s.reps : '';
+  const rp = ex.repeticiones != null ? ex.repeticiones : '—';
+  const wv = s.weight != null ? s.weight : '';
+  const wp = ex.peso != null ? ex.peso : '—';
+
+  const adjDefs = [
+    { key: 'correct',    label: '✓ Peso correcto' },
+    { key: 'up',         label: '↑ Subir peso' },
+    { key: 'down',       label: '↓ Bajar peso' },
+    { key: 'incomplete', label: '✗ Serie incompleta' },
+  ];
+  const pillsHtml = adjDefs.map(a =>
+    `<button class="adj-pill${s.adjustment === a.key ? ' selected ' + a.key : ''}" data-adj="${a.key}"
+      onclick="selectAdjustment(${exIdx},${sIdx},'${a.key}')">${a.label}</button>`
+  ).join('');
+
+  let criteriaHtml = '';
+  if (ex.criterios && ex.criterios.length > 0) {
+    const chips = ex.criterios.map((c, ci) => {
+      const checked = Array.isArray(s.criteriaChecked) && s.criteriaChecked[ci];
+      return `<button class="criteria-chip${checked ? ' checked' : ''}"
+        id="criterion-${exIdx}-${sIdx}-${ci}"
+        onclick="toggleCriterion(${exIdx},${sIdx},${ci})">${checked ? '✓ ' : ''}${escHtml(c)}</button>`;
+    }).join('');
+    criteriaHtml = `<div class="section-label" style="margin-top:12px">Criterios cumplidos</div>
+      <div class="criteria-chips">${chips}</div>`;
+  }
+
+  return `<div class="series-row review" id="series-row-${exIdx}-${sIdx}">
+    <div class="series-row-top">
+      <div class="series-num">${sIdx + 1}</div>
+      <span class="series-row-label">Serie ${sIdx + 1}</span>
+    </div>
+    <div class="series-inputs">
+      <div class="input-group">
+        <label>Repeticiones</label>
+        <input type="number" readonly value="${rv}" placeholder="${rp}" inputmode="numeric">
+      </div>
+      <div class="input-group">
+        <label>Peso (kg)</label>
+        <input type="number" readonly value="${wv}" placeholder="${wp}" inputmode="decimal">
+      </div>
+    </div>
+    <div class="review-panel">
+      <div class="section-label">¿Cómo fue el peso?</div>
+      <div class="adj-grid">${pillsHtml}</div>
+      ${criteriaHtml}
+      <div class="section-label" style="margin-top:12px">Nota (opcional)</div>
+      <textarea class="series-note-input open"
+        placeholder="Nota opcional..."
+        oninput="updateSeriesField(${exIdx},${sIdx},'note',this.value)"
+        rows="2">${escHtml(s.note)}</textarea>
+      <button class="btn btn-success btn-confirm-series" style="margin-top:12px;min-height:48px"
+        ${s.adjustment === null ? 'disabled' : ''}
+        onclick="confirmSeries(${exIdx},${sIdx})">Confirmar serie ✓</button>
+    </div>
+  </div>`;
+}
+
+function buildSeriesDone(exIdx, sIdx, s, ex) {
+  const repsD = s.reps != null ? s.reps : (ex.repeticiones != null ? ex.repeticiones : '—');
+  const weightD = s.weight != null ? s.weight : (ex.peso != null ? ex.peso : '—');
+  const adjLabels = { correct: 'Peso correcto', up: 'Subir peso', down: 'Bajar peso', incomplete: 'Serie incompleta' };
+  const adjLabel = s.adjustment ? adjLabels[s.adjustment] : '';
+  let criteriaHtml = '';
+  if (ex.criterios && ex.criterios.length > 0) {
+    const n = (s.criteriaChecked || []).filter(Boolean).length;
+    criteriaHtml = `<span class="series-done-criteria">✓ ${n}/${ex.criterios.length} criterios</span>`;
+  }
+  return `<div class="series-row done" id="series-row-${exIdx}-${sIdx}">
+    <div class="series-done-row">
+      <div class="series-num">${sIdx + 1}</div>
+      <div class="series-done-info">
+        <span class="series-done-values">${repsD} rep · ${weightD} kg</span>
+        <span class="series-done-adj">
+          <span class="adj-dot ${s.adjustment || ''}"></span>${escHtml(adjLabel)}
+        </span>
+        ${criteriaHtml}
+      </div>
+      <button class="btn-edit-series" onclick="editSeries(${exIdx},${sIdx})">editar</button>
+    </div>
+  </div>`;
+}
+
+function buildSeriesLocked(exIdx, sIdx) {
+  return `<div class="series-row locked" id="series-row-${exIdx}-${sIdx}">
+    <div class="series-row-top">
+      <div class="series-num">${sIdx + 1}</div>
+      <span class="series-locked-text">bloqueada</span>
+    </div>
+  </div>`;
+}
+
+/* ── Series interaction handlers ── */
+
+function openReview(exIdx, sIdx) {
+  const repsEl = document.getElementById(`reps-${exIdx}-${sIdx}`);
+  const weightEl = document.getElementById(`weight-${exIdx}-${sIdx}`);
+  if (repsEl) {
+    const v = repsEl.value;
+    state.exercises[exIdx].log[sIdx].reps = v === '' ? null : parseFloat(v);
+  }
+  if (weightEl) {
+    const v = weightEl.value;
+    state.exercises[exIdx].log[sIdx].weight = v === '' ? null : parseFloat(v);
+  }
+  seriesInReview = { exIdx, sIdx };
+  renderExercise();
+}
+
+function selectAdjustment(exIdx, sIdx, adj) {
+  state.exercises[exIdx].log[sIdx].adjustment = adj;
+  const row = document.getElementById(`series-row-${exIdx}-${sIdx}`);
+  if (row) {
+    row.querySelectorAll('.adj-pill').forEach(p => {
+      const key = p.dataset.adj;
+      p.className = 'adj-pill' + (key === adj ? ' selected ' + key : '');
+    });
+    const btn = row.querySelector('.btn-confirm-series');
+    if (btn) btn.disabled = false;
+  }
+}
+
+function toggleCriterion(exIdx, sIdx, ci) {
+  const s = state.exercises[exIdx].log[sIdx];
+  if (!Array.isArray(s.criteriaChecked)) s.criteriaChecked = [];
+  s.criteriaChecked[ci] = !s.criteriaChecked[ci];
+  const chip = document.getElementById(`criterion-${exIdx}-${sIdx}-${ci}`);
+  if (chip) {
+    chip.classList.toggle('checked', s.criteriaChecked[ci]);
+    chip.innerHTML = (s.criteriaChecked[ci] ? '✓ ' : '') + escHtml(state.exercises[exIdx].criterios[ci]);
+  }
+}
+
+function confirmSeries(exIdx, sIdx) {
+  const s = state.exercises[exIdx].log[sIdx];
+  if (!s.adjustment) return;
+  const ratingMap = { correct: 'ok', up: 'ok', down: 'adjust', incomplete: 'fail' };
+  s.rating = ratingMap[s.adjustment];
+  seriesInReview = null;
+  renderExercise();
+  saveToStorage();
+}
+
+function editSeries(exIdx, sIdx) {
+  seriesInReview = { exIdx, sIdx };
+  renderExercise();
 }
 
 function updateSeriesField(exIdx, sIdx, field, value) {
@@ -1184,59 +1349,8 @@ function updateSeriesField(exIdx, sIdx, field, value) {
   saveToStorage();
 }
 
-function setRating(exIdx, sIdx, rating) {
-  const s = state.exercises[exIdx].log[sIdx];
-  s.rating = rating;
-
-  // update DOM without full re-render for snappiness
-  const row = document.getElementById(`series-row-${exIdx}-${sIdx}`);
-  if (row) {
-    row.className = 'series-row done';
-    row.querySelector('.series-row-header-text').className = 'series-row-header-text';
-    if (!row.querySelector('.done-check')) {
-      const check = document.createElement('span');
-      check.className = 'done-check';
-      check.textContent = '✓';
-      row.querySelector('.series-row-header').appendChild(check);
-    }
-    row.querySelectorAll('.rating-btn').forEach(btn => {
-      btn.className = 'rating-btn' + (btn.dataset.rating === rating ? ' selected' : '');
-    });
-    // highlight next series
-    const nextRow = document.getElementById(`series-row-${exIdx}-${sIdx + 1}`);
-    if (nextRow && !nextRow.classList.contains('done')) {
-      nextRow.className = 'series-row active';
-    }
-  }
-
-  // update progress
-  const ex = state.exercises[exIdx];
-  const completed = state.exercises.filter(e => isExerciseDone(e)).length;
-  const pct = Math.round((completed / state.exercises.length) * 100);
-  document.getElementById('progress-bar').style.width = pct + '%';
-
-  // update next button if last exercise
-  if (state.currentIndex === state.exercises.length - 1) {
-    const allDone = state.exercises.every(isExerciseDone);
-    if (allDone) {
-      document.getElementById('btn-next').textContent = 'Finalizar ✓';
-      document.getElementById('btn-next').className = 'btn btn-success btn-sm';
-    }
-  }
-
-  saveToStorage();
-}
-
-function toggleNote(exIdx, sIdx) {
-  const el = document.getElementById(`note-${exIdx}-${sIdx}`);
-  if (el) {
-    el.classList.toggle('open');
-    if (el.classList.contains('open')) el.focus();
-  }
-}
-
 function isExerciseDone(ex) {
-  return ex.log.every(s => s.rating !== null);
+  return ex.log.every(s => s.adjustment !== null);
 }
 
 function navigate(dir) {
@@ -1249,6 +1363,7 @@ function navigate(dir) {
       // find first incomplete exercise
       const firstIncomplete = state.exercises.findIndex(e => !isExerciseDone(e));
       if (firstIncomplete !== -1) {
+        seriesInReview = null;
         state.currentIndex = firstIncomplete;
         renderExercise();
         saveToStorage();
@@ -1260,6 +1375,7 @@ function navigate(dir) {
   }
 
   if (newIdx < 0 || newIdx >= state.exercises.length) return;
+  seriesInReview = null;
   state.currentIndex = newIdx;
   renderExercise();
   saveToStorage();
@@ -1299,6 +1415,7 @@ function confirmAddExercise() {
   const ex = buildExercise({ nombre: name, series: seriesCount });
   ex.isAdded = true;
   state.exercises.push(ex);
+  seriesInReview = null;
   state.currentIndex = state.exercises.length - 1;
   closeAddModal();
   renderExercise();
@@ -1406,35 +1523,24 @@ function generateMarkdown() {
     md += '\n';
 
     // table
-    md += `| Serie | Reps | Peso (kg) | Valoración | Nota |\n`;
-    md += `|-------|------|-----------|------------|------|\n`;
+    md += `| Serie | Reps | Peso (kg) | Ajuste | Criterios | Nota |\n`;
+    md += `|-------|------|-----------|--------|-----------|------|\n`;
 
     ex.log.forEach((s, i) => {
-      const ratingMap = { ok: '✅ Bien', adjust: '⚠️ Ajustar', fail: '❌ No completada' };
-      const rating = s.rating ? ratingMap[s.rating] : '—';
+      const adjLabels = { correct: 'Peso correcto', up: 'Subir peso', down: 'Bajar peso', incomplete: 'Serie incompleta' };
+      const ajuste = s.adjustment ? adjLabels[s.adjustment] : '—';
       const reps = s.reps != null ? s.reps : (ex.repeticiones != null ? ex.repeticiones : '—');
       const weight = s.weight != null ? s.weight : (ex.peso != null ? ex.peso : '—');
       const note = s.note || '';
-      md += `| ${i+1} | ${reps} | ${weight} | ${rating} | ${note} |\n`;
+      let criteriosCol = '—';
+      if (ex.criterios && ex.criterios.length > 0) {
+        const n = (s.criteriaChecked || []).filter(Boolean).length;
+        criteriosCol = `✓ ${n}/${ex.criterios.length}`;
+      }
+      md += `| ${i+1} | ${reps} | ${weight} | ${ajuste} | ${criteriosCol} | ${note} |\n`;
     });
-    md += '\n';
 
-    // criteria evaluation
-    if (ex.criterios && ex.criterios.length > 0) {
-      const okCount = ex.log.filter(s => s.rating === 'ok').length;
-      const failCount = ex.log.filter(s => s.rating === 'fail').length;
-      const total = ex.log.length;
-
-      let overall;
-      if (failCount / total > 0.5) overall = '❌';
-      else if (okCount / total >= 0.6) overall = '✓';
-      else overall = '⚠️';
-
-      const criteriaStr = ex.criterios.map(c => `${c} ${overall}`).join(', ');
-      md += `**Criterios evaluados:** ${criteriaStr}\n\n`;
-    }
-
-    md += '---\n';
+    md += '\n---\n';
   });
 
   md += `\n*Sesión completada a las ${time} — Duración: ${mins} min*\n---\n`;
@@ -1498,6 +1604,16 @@ function restoreSession() {
   state.timerStart = parseInt(saved.timerStart, 10);
   state.completedAt = null;
 
+  // Migrate log entries from older storage format lacking new fields
+  state.exercises.forEach(ex => {
+    const criteriosLen = (ex.criterios || []).length;
+    ex.log.forEach(s => {
+      if (s.adjustment === undefined) s.adjustment = null;
+      if (!Array.isArray(s.criteriaChecked)) s.criteriaChecked = Array(criteriosLen).fill(false);
+    });
+  });
+
+  seriesInReview = null;
   clearInterval(state.timerInterval);
   document.getElementById('recovery-banner').style.display = 'none';
   initSessionScreen();
