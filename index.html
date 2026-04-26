@@ -657,6 +657,68 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
+  /* ── RECOVERY BANNER ── */
+  #recovery-banner {
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 12px;
+    background: var(--warning);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    color: #1a1a2e;
+  }
+  .recovery-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .recovery-time {
+    font-size: 13px;
+    margin-bottom: 12px;
+    opacity: 0.75;
+  }
+  .recovery-btns { display: flex; gap: 10px; }
+  .btn-discard {
+    background: transparent;
+    border: 1.5px solid rgba(26,26,46,0.35);
+    border-radius: var(--radius-sm);
+    color: #1a1a2e;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px 16px;
+    min-height: 44px;
+    -webkit-appearance: none;
+    transition: background 0.15s;
+  }
+  .btn-discard:hover { background: rgba(26,26,46,0.1); }
+
+  /* ── AI PROMPT SECTION ── */
+  #ai-prompt-section {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 16px;
+  }
+  #ai-prompt-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ai-chevron {
+    font-size: 12px;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+  #ai-prompt-toggle.open .ai-chevron { transform: rotate(180deg); }
+  #ai-prompt-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  #ai-prompt-content.open { max-height: 900px; }
+  .ai-prompt-inner { padding-top: 12px; }
+
   /* finish button highlight */
   .finish-banner {
     background: rgba(6,214,160,0.1);
@@ -697,6 +759,16 @@
 
 <!-- ════════════════════════════════ SCREEN 1 ════════════════════════════════ -->
 <div id="screen-load" class="screen active">
+
+  <div id="recovery-banner" style="display:none">
+    <div class="recovery-title" id="recovery-title"></div>
+    <div class="recovery-time" id="recovery-time"></div>
+    <div class="recovery-btns">
+      <button class="btn btn-primary btn-sm" style="flex:1" onclick="restoreSession()">Continuar sesión →</button>
+      <button class="btn-discard" onclick="discardSession()">Descartar</button>
+    </div>
+  </div>
+
   <div class="load-card">
     <div class="logo">
       <span class="logo-icon">🏋️</span>
@@ -720,6 +792,54 @@
       Cargar sesión →
     </button>
   </div>
+
+  <div id="ai-prompt-section">
+    <button class="btn btn-ghost" id="ai-prompt-toggle" onclick="toggleAiPrompt()">
+      <span>💡 Generar plan con IA</span>
+      <span class="ai-chevron">▼</span>
+    </button>
+    <div id="ai-prompt-content">
+      <div class="ai-prompt-inner">
+        <div class="section-label" style="margin-bottom:8px">Copia este prompt en cualquier IA</div>
+        <textarea id="ai-prompt-text" readonly style="min-height:280px;font-size:13px;font-family:monospace;background:var(--bg2);cursor:default;resize:vertical">Eres un entrenador personal especializado en fuerza funcional y prevención de lesiones.
+Necesito que generes un plan de entrenamiento en formato JSON para cargar en mi app.
+Mi perfil:
+
+Hombre, 48 años, 1,74m, ~83kg
+Objetivo: pérdida de grasa y fuerza funcional
+Historial: dolor lumbar recurrente (sin episodio activo)
+Disponibilidad: 1 sesión/semana en gimnasio con máquinas
+Duración: ~1 hora
+
+Genera el JSON con esta estructura EXACTA (sin texto adicional, solo el JSON):
+{
+"sesion": "Nombre descriptivo",
+"fecha": "YYYY-MM-DD",
+"ejercicios": [
+{
+"nombre": "Nombre del ejercicio",
+"series": 3,
+"repeticiones": 12,
+"peso_orientativo_kg": 40,
+"notas": "Clave técnica principal",
+"criterios_valoracion": [
+"Criterio observable 1",
+"Criterio observable 2"
+]
+}
+]
+}
+Incluye 6-8 ejercicios ordenados por bloque (calentamiento, bloque principal,
+vuelta a la calma). Para ejercicios de movilidad omite repeticiones y peso.
+Los criterios_valoracion deben ser sensaciones internas, no métricas externas.</textarea>
+        <div class="copy-btn-wrap mt-12">
+          <button class="btn btn-secondary btn-sm" onclick="copyAiPrompt()">Copiar prompt</button>
+          <div class="copy-confirm" id="ai-copy-confirm">¡Copiado! ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ════════════════════════════════ SCREEN 2 ════════════════════════════════ -->
@@ -799,6 +919,27 @@ const state = {
 };
 
 /* ═══════════════════════════════════════════════════
+   STORAGE
+═══════════════════════════════════════════════════ */
+const STORAGE_KEY = 'gym_session_state';
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      session: state.session,
+      exercises: state.exercises,
+      currentIndex: state.currentIndex,
+      timerStart: state.timerStart,
+      savedAt: Date.now(),
+    }));
+  } catch(e) {}
+}
+
+function clearStorage() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+/* ═══════════════════════════════════════════════════
    SCREEN 1 — LOAD
 ═══════════════════════════════════════════════════ */
 document.getElementById('file-input').addEventListener('change', e => {
@@ -847,9 +988,14 @@ function loadSession() {
   }
 
   errEl.classList.remove('visible');
+  clearStorage();
+  document.getElementById('recovery-banner').style.display = 'none';
+  clearInterval(state.timerInterval);
+
   state.session = parsed;
   state.exercises = parsed.ejercicios.map(buildExercise);
   state.currentIndex = 0;
+  state.completedAt = null;
 
   initSessionScreen();
   showScreen('screen-session');
@@ -1035,6 +1181,7 @@ function updateSeriesField(exIdx, sIdx, field, value) {
   } else {
     s[field] = value;
   }
+  saveToStorage();
 }
 
 function setRating(exIdx, sIdx, rating) {
@@ -1076,6 +1223,8 @@ function setRating(exIdx, sIdx, rating) {
       document.getElementById('btn-next').className = 'btn btn-success btn-sm';
     }
   }
+
+  saveToStorage();
 }
 
 function toggleNote(exIdx, sIdx) {
@@ -1102,6 +1251,7 @@ function navigate(dir) {
       if (firstIncomplete !== -1) {
         state.currentIndex = firstIncomplete;
         renderExercise();
+        saveToStorage();
       }
       return;
     }
@@ -1112,6 +1262,7 @@ function navigate(dir) {
   if (newIdx < 0 || newIdx >= state.exercises.length) return;
   state.currentIndex = newIdx;
   renderExercise();
+  saveToStorage();
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1151,6 +1302,7 @@ function confirmAddExercise() {
   state.currentIndex = state.exercises.length - 1;
   closeAddModal();
   renderExercise();
+  saveToStorage();
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1178,6 +1330,7 @@ function getCompletionTime() {
 function finishSession() {
   state.completedAt = new Date();
   clearInterval(state.timerInterval);
+  clearStorage();
 
   const md = generateMarkdown();
   document.getElementById('summary-output').value = md;
@@ -1312,6 +1465,74 @@ function escHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/* ═══════════════════════════════════════════════════
+   SESSION RECOVERY
+═══════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (saved && saved.session) {
+      document.getElementById('recovery-title').textContent =
+        '📂 ' + (saved.session.sesion || 'Sesión guardada');
+      const savedAt = new Date(saved.savedAt);
+      const timeStr = savedAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('recovery-time').textContent = `Guardada a las ${timeStr}`;
+      document.getElementById('recovery-banner').style.display = 'block';
+    }
+  } catch(e) {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+});
+
+function restoreSession() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  const saved = JSON.parse(raw);
+  state.session = saved.session;
+  state.exercises = saved.exercises;
+  state.currentIndex = saved.currentIndex;
+  state.timerStart = parseInt(saved.timerStart, 10);
+  state.completedAt = null;
+
+  clearInterval(state.timerInterval);
+  document.getElementById('recovery-banner').style.display = 'none';
+  initSessionScreen();
+  showScreen('screen-session');
+  state.timerInterval = setInterval(updateTimer, 1000);
+}
+
+function discardSession() {
+  clearStorage();
+  document.getElementById('recovery-banner').style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════
+   AI PROMPT SECTION
+═══════════════════════════════════════════════════ */
+function toggleAiPrompt() {
+  const toggle = document.getElementById('ai-prompt-toggle');
+  const content = document.getElementById('ai-prompt-content');
+  const isOpen = content.classList.contains('open');
+  content.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+}
+
+function copyAiPrompt() {
+  const text = document.getElementById('ai-prompt-text').value;
+  const confirm = document.getElementById('ai-copy-confirm');
+  const show = () => {
+    confirm.classList.add('show');
+    setTimeout(() => confirm.classList.remove('show'), 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(show).catch(() => fallbackCopy(text, show));
+  } else {
+    fallbackCopy(text, show);
+  }
 }
 </script>
 </body>
