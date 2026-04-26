@@ -324,23 +324,6 @@
     line-height: 1.5;
   }
 
-  .criteria-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 4px;
-  }
-
-  .criterion-tag {
-    background: rgba(6,214,160,0.1);
-    border: 1px solid rgba(6,214,160,0.3);
-    color: var(--success);
-    border-radius: 20px;
-    padding: 4px 10px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-
   /* ── SERIES ── */
   .series-header {
     display: flex;
@@ -820,37 +803,45 @@
     <div id="ai-prompt-content">
       <div class="ai-prompt-inner">
         <div class="section-label" style="margin-bottom:8px">Copia este prompt en cualquier IA</div>
-        <textarea id="ai-prompt-text" readonly style="min-height:280px;font-size:13px;font-family:monospace;background:var(--bg2);cursor:default;resize:vertical">Eres un entrenador personal especializado en fuerza funcional y prevención de lesiones.
-Necesito que generes un plan de entrenamiento en formato JSON para cargar en mi app.
-Mi perfil:
+        <textarea id="ai-prompt-text" readonly style="min-height:280px;font-size:13px;font-family:monospace;background:var(--bg2);cursor:default;resize:vertical">Eres un entrenador personal especializado en fuerza funcional
+y prevención de lesiones musculoesqueléticas.
+Genera un plan de entrenamiento en formato JSON para cargar en mi app de seguimiento.
 
-Hombre, 48 años, 1,74m, ~83kg
-Objetivo: pérdida de grasa y fuerza funcional
-Historial: dolor lumbar recurrente (sin episodio activo)
-Disponibilidad: 1 sesión/semana en gimnasio con máquinas
-Duración: ~1 hora
+Mi perfil:
+- Sexo: [hombre/mujer]
+- Edad: [años]
+- Objetivo principal: [pérdida de grasa / fuerza / resistencia / bienestar general]
+- Equipamiento disponible: [máquinas de gimnasio / peso libre / solo esterilla]
+- Duración de la sesión: [minutos]
+- Limitaciones o historial relevante: [ninguna / indicar si las hay]
 
 Genera el JSON con esta estructura EXACTA (sin texto adicional, solo el JSON):
+
 {
-"sesion": "Nombre descriptivo",
-"fecha": "YYYY-MM-DD",
-"ejercicios": [
-{
-"nombre": "Nombre del ejercicio",
-"series": 3,
-"repeticiones": 12,
-"peso_orientativo_kg": 40,
-"notas": "Clave técnica principal",
-"criterios_valoracion": [
-"Criterio observable 1",
-"Criterio observable 2"
-]
+  "sesion": "Nombre descriptivo de la sesión",
+  "fecha": "YYYY-MM-DD",
+  "ejercicios": [
+    {
+      "nombre": "Nombre del ejercicio",
+      "series": 3,
+      "repeticiones": 12,
+      "peso_orientativo_kg": 40,
+      "notas": "Clave técnica principal del ejercicio",
+      "criterios_valoracion": [
+        "Criterio observable 1 (sensación interna)",
+        "Criterio observable 2"
+      ]
+    }
+  ]
 }
-]
-}
-Incluye 6-8 ejercicios ordenados por bloque (calentamiento, bloque principal,
-vuelta a la calma). Para ejercicios de movilidad omite repeticiones y peso.
-Los criterios_valoracion deben ser sensaciones internas, no métricas externas.</textarea>
+
+Reglas para generar el JSON:
+- Incluye 6-8 ejercicios ordenados: calentamiento → bloque principal → vuelta a la calma
+- Para ejercicios de movilidad omite repeticiones y peso_orientativo_kg
+- criterios_valoracion: máximo 3 por ejercicio, formulados en positivo,
+  observables por autopercepción (no métricas externas)
+- notas: una sola línea, clave técnica del ejercicio
+- Responde SOLO con el JSON, sin texto antes ni después</textarea>
         <div class="copy-btn-wrap mt-12">
           <button class="btn btn-secondary btn-sm" onclick="copyAiPrompt()">Copiar prompt</button>
           <div class="copy-confirm" id="ai-copy-confirm">¡Copiado! ✓</div>
@@ -1117,16 +1108,6 @@ function renderExercise() {
   // coach notes
   if (ex.notas) {
     html += `<div class="coach-notes">💬 ${escHtml(ex.notas)}</div>`;
-  }
-
-  // criteria
-  if (ex.criterios && ex.criterios.length > 0) {
-    html += `<div class="section-label" style="margin-top:4px">Criterios de valoración</div>`;
-    html += `<div class="criteria-list">`;
-    ex.criterios.forEach(c => {
-      html += `<span class="criterion-tag">${escHtml(c)}</span>`;
-    });
-    html += `</div>`;
   }
 
   html += `</div>`; // end exercise-card
